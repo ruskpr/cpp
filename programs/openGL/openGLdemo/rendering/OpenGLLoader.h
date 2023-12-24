@@ -34,7 +34,7 @@ static DrawDetails UploadMesh(const std::vector<Vertex>& verts, const std::vecto
 
 static void UnloadMesh(std::vector<DrawDetails>& details)
 {
-	for (const auto& d : details)
+	for (auto& d : details)
 	{
 		glDeleteBuffers(1, &d.vao);
 	}
