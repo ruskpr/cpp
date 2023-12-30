@@ -1,21 +1,38 @@
 #pragma once
-#include <cstdio>
 #include "Utilities.h"
+#include <cstdio>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include "rendering/GLSL/GLSLShader.h"
+#include <iostream>
 
-static void glfw_error_callback(int error, const char* description)
+extern GLSLShader* ourShader;
+
+void glfw_error_callback(int error, const char* description)
 {
 	write_log(description);
 	throw("glfw error");
- }
+}
 
-static void glfw_window_close_callback(GLFWwindow* window)
+void glfw_window_close_callback(GLFWwindow* window)
 {
-	std::string msg = "Window closed at: ";
-	msg += get_timestamp();
-	write_log(msg.c_str());
-}	
+	write_log("window closed");
+}
 
-static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void glfw_framebuffer_size_callback(GLFWwindow* window, int w, int h)
 {
-	glViewport(0, 0, width, height);
+	std::string the_log = "window size changed to: " + std::to_string(w) + "x" + std::to_string(h);
+	write_log(the_log.c_str());
+	glViewport(0, 0, w, h);
+	//ourShader->Use();
+	//ourShader->SetVec2("uResolution", glm::vec2(w, h));
+}
+
+void glfw_mouse_movement_callback(GLFWwindow* window, double x, double y)
+{
+	ourShader->Use();
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	ourShader->SetVec2("uMousePos", glm::vec2(x, height - y));
+	std::cout << "x: " << x << " y: " << y << '\n';
 }

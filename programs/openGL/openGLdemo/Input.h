@@ -1,9 +1,10 @@
 #pragma once
+#include <GLFW/glfw3.h>
 
-static void ProcessInput(GLFWwindow* window)
+void ProcessInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
-		glfwSetWindowShouldClose(window, true); // close window
-	}	
+		glfwSetWindowShouldClose(window, true);
+	}
 }

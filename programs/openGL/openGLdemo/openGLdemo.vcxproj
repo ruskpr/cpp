@@ -132,14 +132,23 @@
   <ItemGroup>
     <ClInclude Include="Callbacks.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="rendering\GLSL\GLSLShader.h" />
     <ClInclude Include="rendering\GL\DrawDetails.h" />
     <ClInclude Include="rendering\GL\MeshLoader.h" />
-    <ClInclude Include="rendering\GL\QueryAttribs.h" />
+    <ClInclude Include="rendering\GLSL\QueryShader.h" />
     <ClInclude Include="rendering\GL\Version.h" />
     <ClInclude Include="rendering\GL\Draw.h" />
-    <ClInclude Include="rendering\GL\ShaderLoader.h" />
+    <ClInclude Include="rendering\GLSL\ShaderLoader.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="rendering\GL\Vertex.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="GLSL\FragmentShader.glsl" />
+    <None Include="GLSL\VertexShader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="GLSL\2DVertexShader.glsl" />
+    <Text Include="GLSL\PizzaFragShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

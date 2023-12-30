@@ -1,18 +1,25 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "Callbacks.h"
-#include "Utilities.h"
 #include "Input.h"
-#include <iostream>
-#include <random>
-#include <vector>
+#include "Utilities.h"
 #include "rendering/GL/Vertex.h"
-#include "rendering/GL/Draw.h"
-#include "rendering/GL/Version.h"
 #include "rendering/GL/DrawDetails.h"
 #include "rendering/GL/MeshLoader.h"
-#include "rendering/GL/ShaderLoader.h"
-#include "rendering/GL/QueryAttribs.h"
+#include "rendering/GL/Draw.h"
+#include "rendering/GL/Version.h"
+#include "rendering/GLSL/GLSLShader.h"
+#include "rendering/GLSL/QueryShader.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <vector>
+#include <fstream>
+
+GLSLShader* ourShader;
 
 int main(int argc, char* argv[])
 {
@@ -23,79 +30,63 @@ int main(int argc, char* argv[])
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, extract_version(argv[0]), NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 600, extract_prog_name(argv[0]), nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	printGLinfo();
 
 	glfwSetWindowCloseCallback(window, glfw_window_close_callback);
 	glfwSetFramebufferSizeCallback(window, glfw_framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, glfw_mouse_movement_callback);
 
-	const char* vertshader =
-		"#version 430                                          \n"
-		"layout(location = 0) in vec3 vertPos;                 \n"
-		"layout(location = 1) in vec3 vertColor;               \n"
-		"layout(location = 0) out vec4 fragColor;               \n"
-		"void main(){                                          \n"
-		"  fragColor = vec4(vertColor, 1.0);                   \n"
-		"  gl_Position = vec4(vertPos, 1.0);                   \n"
-		"}";
-	const char* fragshader =
-		"#version 430                                          \n"
-		"layout(location = 0) in vec4 fragColor;               \n"
-		"out vec4 color;                                       \n"
-		"void main() {                                         \n"
-		"  color = fragColor;                                  \n"
-		"}";
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-	unsigned int mainShader = LoadShader(vertshader, fragshader);
-	glClearColor(.2f, .2f, .6f, 0.0f);
+	std::string vertshader = ReadToString("..\\openGLdemo\\GLSL\\2DVertexShader.glsl");
+	std::string fragshader = ReadToString("..\\openGLdemo\\GLSL\\PizzaFragShader.glsl");
+	ourShader = new GLSLShader(vertshader.c_str(), fragshader.c_str());
+	QueryInputAttribs(ourShader->GetHandle());
+	QueryUniforms(ourShader->GetHandle());
 
-	std::vector<DrawDetails> drawDetails;
-	{
+	glClearColor(1.f, 1.f, 1.f, 1.f);
+	std::vector<DrawDetails> ourDrawDetails;
+	std::vector<DrawStripDetails> drawDetails;
 
-		const float posData[] = {
-			-0.8f, -0.8f, 0.0f,
-			0.8f, -0.8f, 0.0f,
-			0.0f,  0.8f, 0.0f
-		};
+	const GLfloat posData[] = {
+	  -1, 1,
+	  -1, -1,
+	  1, 1,
+	  1, -1
+	};
 
-		const float colorData[] = {
-			1.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 1.0f
-		};
+	drawDetails.push_back(UploadMesh(posData, sizeof(posData) / sizeof(posData[0])));
 
-		const GLuint elems[] = { 0, 1, 2 };
-		drawDetails.push_back(UploadMesh(posData, colorData, sizeof(posData)/sizeof(posData[0]),
-			elems, sizeof(elems)/sizeof(elems[0])));
-	}
-
-	//std::default_random_engine generator;
-	//std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-
-	QueryAttribs(drawDetails.back().vao);
-
+	double prev_time = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
+		double current_time = glfwGetTime();
+		double dt = current_time - prev_time;
+		prev_time = current_time;
+
+		// HANDLE KEYPRESS
 		ProcessInput(window);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glUseProgram(mainShader);
 
-		/*float c1 = distribution(generator);
-		float c2 = distribution(generator);
-		float c3 = distribution(generator);*/
+		ourShader->Use();
 
-		/*uint32_t var = glGetUniformLocation(mainShader, "ucolor");
+		//glm::mat4 finalModelMatrix = glm::mat4(1);
+		//finalModelMatrix = glm::translate(finalModelMatrix, glm::vec3(sin((float)glfwGetTime()) / 2, cos((float)glfwGetTime()) / 2, 0));
+		//finalModelMatrix = glm::rotate(finalModelMatrix, (float)glfwGetTime(), glm::vec3(0.f, 1.f, 0.f));
+		//finalModelMatrix = glm::scale(finalModelMatrix, glm::vec3(.5));
+		//ourShader.SetMat4("uModelMatrix", finalModelMatrix);
+		//ourShader.SetVec2("uResolution", glm::vec2(2));
+		DrawStrip(drawDetails);
 
-		glUniform3f(var, c1, c2, c3);*/
-
-		Draw(drawDetails);
+		// RENDER OUR OBJECT
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	UnloadMesh(drawDetails);
+	UnloadMesh(ourDrawDetails);
 	glfwTerminate();
 
 	return 0;
